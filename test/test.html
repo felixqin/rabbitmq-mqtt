@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+	<title>test mqtt websocket</title>
+	<script src="http://cdn.bootcss.com/jquery/2.1.1/jquery.min.js"></script>
+	<script src="http://cdn.bootcss.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="http://cdn.bootcss.com/bootstrap/3.3.1/css/bootstrap.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
+    
+<script>
+
+
+    var wsbroker = '192.168.31.10';  // mqtt websocket enabled broker
+    var wsport = 15675; // port for above
+    var clientid = "myclientid_" + parseInt(Math.random() * 100, 10);
+    var client = new Paho.MQTT.Client(wsbroker, wsport, "/ws", clientid);
+
+/*
+    client.onConnectionLost = function (responseObject) {
+        debug("CONNECTION LOST - " + responseObject.errorMessage);
+    };
+    client.onMessageArrived = function (message) {
+        debug("RECEIVE ON " + message.destinationName + " PAYLOAD " + message.payloadString);
+        print_first(message.payloadString);
+    };
+
+
+    var options = {
+        timeout: 3,
+        onSuccess: function () {
+            debug("CONNECTION SUCCESS");
+            client.subscribe('/topic/test', {qos: 1});
+        },
+        onFailure: function (message) {
+            debug("CONNECTION FAILURE - " + message.errorMessage);
+        }
+    };
+    if (location.protocol == "https:") {
+        options.useSSL = true;
+    }
+    debug("CONNECT TO " + wsbroker + ":" + wsport);
+    client.connect(options);
+
+*/
+
+
+        client.connect({onSuccess:onConnect});//连接服务器并注册连接成功处理事件
+        function onConnect() {
+	        console.log("onConnected");
+	        client.subscribe("/test");//订阅主题
+        }
+        client.onConnectionLost = onConnectionLost;//注册连接断开处理事件
+        client.onMessageArrived = onMessageArrived;//注册消息接收处理事件
+        function onConnectionLost(responseObject) {
+            if (responseObject.errorCode !== 0) {
+                console.log("onConnectionLost:"+responseObject.errorMessage);
+                console.log("连接已断开");
+             }
+        }
+        function onMessageArrived(message) {
+		  console.log("收到消息:"+message.payloadString);
+		}
+
+        function send_test() {
+            //发送消息
+            message = new Paho.MQTT.Message("hello");
+            message.destinationName = "/test";
+            client.send(message);
+        }
+        
+
+        $(document).ready(function(){
+  $("#b01").click(function(){
+    send_test();
+  });
+});
+</script>
+
+</head>
+<body>
+
+    <button id="b01" type="button">Call</button>
+
+
+</body>
+</html>
+
